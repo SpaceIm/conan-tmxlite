@@ -25,7 +25,7 @@ class TmxliteConan(ConanFile):
         "rtti": True,
     }
 
-    exports_sources = "CMakeLists.txt"
+    exports_sources = ["CMakeLists.txt", "patches/**"]
     generators = "cmake"
     _cmake = None
 
@@ -56,9 +56,8 @@ class TmxliteConan(ConanFile):
                   destination=self._source_subfolder, strip_root=True)
 
     def _patch_sources(self):
-        # Don't inject -O3 in compile flags
-        tools.replace_in_file(os.path.join(self._source_subfolder, "tmxlite", "CMakeLists.txt"),
-                              "-O3", "")
+        for patch in self.conan_data.get("patches", {}).get(self.version, []):
+            tools.patch(**patch)
         # unvendor miniz
         tools.remove_files_by_mask(os.path.join(self._source_subfolder, "tmxlite", "src"), "miniz*")
         tools.replace_in_file(os.path.join(self._source_subfolder, "tmxlite", "src", "CMakeLists.txt"),
@@ -67,11 +66,9 @@ class TmxliteConan(ConanFile):
         tools.rmdir(os.path.join(self._source_subfolder, "tmxlite", "src", "detail"))
         tools.replace_in_file(os.path.join(self._source_subfolder, "tmxlite", "src", "CMakeLists.txt"),
                               "${PROJECT_DIR}/detail/pugixml.cpp", "")
-        for src_file in ["ObjectGroup.cpp", "ImageLayer.cpp", "LayerGroup.cpp", "Property.cpp",
-                         "ObjectTypes.cpp", "TileLayer.cpp", "Map.cpp", "Object.cpp", "Tileset.cpp"]:
-            tools.replace_in_file(os.path.join(self._source_subfolder, "tmxlite", "src", src_file),
-                                  "#include \"detail/pugixml.hpp\"",
-                                  "#include <pugixml.hpp>")
+        # Don't inject -O3 in compile flags
+        tools.replace_in_file(os.path.join(self._source_subfolder, "tmxlite", "CMakeLists.txt"),
+                              "-O3", "")
 
     def _configure_cmake(self):
         if self._cmake:
