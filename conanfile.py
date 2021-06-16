@@ -1,4 +1,5 @@
 from conans import ConanFile, CMake, tools
+from conans.errors import ConanInvalidConfiguration
 import os
 
 required_conan_version = ">=1.33.0"
@@ -47,6 +48,8 @@ class TmxliteConan(ConanFile):
     def validate(self):
         if self.settings.compiler.get_safe("cppstd"):
             tools.check_min_cppstd(self, 14)
+        if self.settings.compiler == "gcc" and self.settings.compiler.version < "5":
+            raise ConanInvalidConfiguration("gcc < 5 not supported")
 
     def source(self):
         tools.get(**self.conan_data["sources"][self.version],
@@ -74,7 +77,6 @@ class TmxliteConan(ConanFile):
         if self._cmake:
             return self._cmake
         self._cmake = CMake(self)
-        self._cmake.definitions["CMAKE_CXX_STANDARD"] = self.settings.compiler.get_safe("cppstd", 14)
         self._cmake.definitions["TMXLITE_STATIC_LIB"] = not self.options.shared
         self._cmake.definitions["PROJECT_STATIC_RUNTIME"] = False
         self._cmake.definitions["USE_RTTI"] = self.options.rtti
