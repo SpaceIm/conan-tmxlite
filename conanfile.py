@@ -74,6 +74,7 @@ class TmxliteConan(ConanFile):
         if self._cmake:
             return self._cmake
         self._cmake = CMake(self)
+        self._cmake.definitions["CMAKE_CXX_STANDARD"] = self.settings.compiler.get_safe("cppstd", 14)
         self._cmake.definitions["TMXLITE_STATIC_LIB"] = not self.options.shared
         self._cmake.definitions["PROJECT_STATIC_RUNTIME"] = False
         self._cmake.definitions["USE_RTTI"] = self.options.rtti
